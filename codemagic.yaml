@@ -1,0 +1,30 @@
+workflows:
+  android-apk:
+    name: Android APK
+    max_build_duration: 30
+    instance_type: linux_x2
+    environment:
+      flutter: stable
+    scripts:
+      - name: Generate platform folders
+        script: |
+          cd mobile_app
+          flutter create --org edu.kwasu --project-name secure_messenger .
+          rm -f test/widget_test.dart
+      - name: Android config
+        script: |
+          cd mobile_app
+          sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/' android/app/build.gradle.kts || true
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' android/app/build.gradle || true
+      - name: Packages and tests
+        script: |
+          cd mobile_app
+          flutter pub get
+          flutter test
+      - name: Build APK
+        script: |
+          cd mobile_app
+          flutter build apk --release
+    artifacts:
+      - mobile_app/build/app/outputs/flutter-apk/*.apk
