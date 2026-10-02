@@ -49,7 +49,8 @@ class CryptoService {
     required String recipientPublicKey,
   }) async {
     final ks = await _aes.newSecretKey(); // CSPRNG 256-bit session key
-    final ksBytes = await ks.extractBytes();
+    // Copy into a normal (mutable) list so we can wipe it afterwards.
+    final ksBytes = List<int>.from(await ks.extractBytes());
     final box = await _aes.encrypt(
       utf8.encode(text),
       secretKey: ks,
@@ -92,12 +93,12 @@ class CryptoService {
   }) async {
     final ck = Map<String, dynamic>.from(env['ck'] as Map);
     final kek = await _kek(_pair(myPrivateKey, myPublicKey), _pub(ck['epk']));
-    final ksBytes = await _aes.decrypt(
+    final ksBytes = List<int>.from(await _aes.decrypt(
       SecretBox(base64Decode(ck['ct']),
           nonce: base64Decode(ck['nonce']), mac: Mac(base64Decode(ck['tag']))),
       secretKey: kek,
       aad: _wrapAad,
-    );
+    ));
     final plain = await _aes.decrypt(
       SecretBox(base64Decode(env['cp']),
           nonce: base64Decode(env['nonce']), mac: Mac(base64Decode(env['ta']))),
