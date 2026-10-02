@@ -13,9 +13,12 @@ workflows:
       - name: Android config
         script: |
           cd mobile_app
-          sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
-          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/' android/app/build.gradle.kts || true
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' android/app/build.gradle || true
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          perl -0pi -e 's/<application/<uses-permission android:name="android.permission.INTERNET"\/>\n    <application android:usesCleartextTraffic="true"/' $MANIFEST
+          sed -i.bak 's/minSdk = flutter.minSdkVersion/minSdk = 24/' android/app/build.gradle.kts || true
+          sed -i.bak 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' android/app/build.gradle || true
+          cat $MANIFEST
+          grep -q "android.permission.INTERNET" $MANIFEST
       - name: Packages and tests
         script: |
           cd mobile_app
